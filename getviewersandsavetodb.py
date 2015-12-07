@@ -2,14 +2,12 @@ import urllib.request
 import urllib.parse
 import json
 import datetime
-import pickle
 import redis
+import os
 
-POOL = redis.ConnectionPool(host='localhost', port=6379, db=0)
+dbAddress = os.environ["dbAddress"]
+POOL = redis.ConnectionPool(host=dbAddress, port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
-
-#with open("GameHistory", "rb") as f:
-#    games = pickle.load(f)
 
 
 #def addmeasurement(name, viewernumber, date):
@@ -24,10 +22,9 @@ db = redis.StrictRedis(connection_pool=POOL)
 
 def addmeasurementtodb(name, viewnumber, date):
     #get the listname from the name
-    namestripped = "".join(name.split())
-    #print(namestripped)
-    listname = db.hget("shorttermgamelist", namestripped)
-    if listname == None:
+    listname = db.hget("shorttermgamelist", name)
+    if listname is None:
+        namestripped = "".join(name.split())
         db.hset("shorttermgamelist", name, namestripped)
         listname = namestripped
     #append to the list
@@ -47,8 +44,5 @@ for chans in top:
     viewers = chans["viewers"]
     date = datetime.datetime.now()
     addmeasurementtodb(game, viewers, date)
-
-#with open("GameHistory", "wb") as f:
-#    pickle.dump(games, f)
 
 print("Done")
