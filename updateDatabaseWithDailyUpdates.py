@@ -22,9 +22,11 @@ for game in list_of_game_names:
     game_set_name = game + "-average_every_hour"
 
     #oldest timestamp is 30 days old
-    oldest_possible_timestamp = current_date + 60 * 60 * 24 * 30
-    list_of_too_old_stuff = db.zrangebyscore(game_set_name, oldest_possible_timestamp, "+inf")
-    db.zremrangebyscore(game_set_name, oldest_possible_timestamp, "+inf")
+    current_time_plus_a_day = current_date + (60 * 60 * 24)
+    current_time_plus_30_days = current_date + (60 * 60 * 24 * 30)
+    db.zremrangebyscore(game_set_name, current_time_plus_30_days, "+inf")
+    list_of_too_old_stuff = db.zrangebyscore(game_set_name, current_date, current_time_plus_a_day)
+
     if len(list_of_too_old_stuff) > 0:
         average = functools.reduce(add_two_numbers, [int(float(x)) for x in list_of_too_old_stuff]) // len(
                 list_of_too_old_stuff)
