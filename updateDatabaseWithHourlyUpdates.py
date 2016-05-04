@@ -27,3 +27,5 @@ for game in list_of_game_names:
     average = functools.reduce(add_two_numbers, [int(float(x)) for x in list_of_events]) // len(list_of_events)
     if db.zadd(game + "-average_every_hour", current_date, average) == 0:
         db.zadd(game + "-average_every_hour", current_date, (repr(average) + "." + repr(current_date)))
+
+print("Hourly updates done. " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

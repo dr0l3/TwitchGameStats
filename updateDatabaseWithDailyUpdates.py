@@ -35,3 +35,5 @@ for game in list_of_game_names:
 
     if db.zadd(game + "-average_every_day", current_date, average) == 0:
         db.zadd(game + "-average_every_day", current_date, (repr(average) + "." + repr(current_date)))
+
+print("Daily updates done. " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

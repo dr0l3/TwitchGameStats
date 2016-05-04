@@ -1,0 +1,4 @@
+* * * * * root python3 /usr/bin/getviewersandsavetodb.py >> /var/log/cron.log 2>&1
+0 3 * * * root python3 /usr/bin/updateDatabaseWithDailyUpdates.py >> /var/log/cron.log 2>&1
+0 * * * * root python3 /usr/bin/updateDatabaseWithHourlyUpdates.py >> /var/log/cron.log 2>&1
+#empty line

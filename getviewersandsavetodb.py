@@ -43,4 +43,4 @@ for chans in top:
     date = datetime.datetime.now()
     addmeasurementtodb(game, viewers, int(date.timestamp()))
 
-print("Done. " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+print("Viewship numbers downloaded. " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
