@@ -6,8 +6,8 @@ import datetime
 import redis
 import os
 
-# dbAddress = os.environ["dbAddress"]
-POOL = redis.ConnectionPool(host='localhost', port=6379, db=0)
+dbAddress = os.environ["dbAddress"]
+POOL = redis.ConnectionPool(host=dbAddress, port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
 
 
@@ -22,8 +22,6 @@ db = redis.StrictRedis(connection_pool=POOL)
 
 
 def addmeasurementtodb(gamename, viewnumber, timestamp):
-    # get the listname from the name
-    setname = "".join(gamename.split())
     db.sadd("gamelist", gamename)
     # append to the list
     if db.zadd(gamename+"-last_hour", timestamp, viewnumber) == 0:
