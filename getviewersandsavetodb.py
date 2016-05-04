@@ -6,10 +6,10 @@ import datetime
 import redis
 import os
 
-dbAddress = os.environ["dbAddress"]
+
+dbAddress = os.environ['DBADDRESS']
 POOL = redis.ConnectionPool(host=dbAddress, port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
-
 
 # def addmeasurement(name, viewernumber, date):
 #    if games.__contains__(name):

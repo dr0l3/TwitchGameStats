@@ -40,21 +40,26 @@ function getGameDataFromDB(data) {
         gameStats["name"] = data;
         var viewNumbers = [];
 
-        client.lrange(data, "0", "-1", function (err, replies) {
+        client.zrange(data+"-last_hour", "0", "-1","withscores", function (err, replies) {
             if (err) {
                 console.log("Err in data connection to Redis: " + err);
                 resolve({});
             }
-            if (typeof replies != 'undefined') {
-                replies.forEach(function (reply, i) {
-                    var temp = [extractdatefromdbstring(reply), parseInt(reply.substring(1, reply.indexOf(",")))];
-                    viewNumbers.push(temp);
-                    if (i + 1 === replies.length) {
-                        gameStats["data"] = viewNumbers;
-                        resolve(gameStats);
-                    }
-                });
+            //console.log(replies);
+
+            for (var i = 0; i < replies.length; i = i+2){
+                var date = new Date(replies[i+1]*1000);
+                var date_in_utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes());
+
+                viewNumbers.push([date_in_utc, parseInt(replies[i])]);
             }
+
+
+            gameStats["data"] = viewNumbers;
+            console.log(gameStats)
+
+            //console.log(replies);
+            resolve(gameStats);
         });
     });
 }
@@ -128,11 +133,12 @@ app.get('/public/lasthour.json', function(req, res){
 
     //Find all game titles
     var gamelist = new Promise(function(resolve, reject) {
-        client.keys("*", function(err, replies){
+        client.smembers("gamelist", function(err, replies){
             var games = [];
             replies.forEach(function(reply, i){
                 games.push(reply);
             });
+            //console.log(games);
             resolve(games);
         });
     });
@@ -144,6 +150,7 @@ app.get('/public/lasthour.json', function(req, res){
 
     //send the page
     more_res.then(function(data){
+        //console.log(data);
         res.send(data);
     });
 });
