@@ -6,7 +6,7 @@ import datetime
 import redis
 import os
 
-#dbAddress = os.environ["dbAddress"]
+# dbAddress = os.environ["dbAddress"]
 POOL = redis.ConnectionPool(host='localhost', port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
 
@@ -24,9 +24,10 @@ db = redis.StrictRedis(connection_pool=POOL)
 def addmeasurementtodb(gamename, viewnumber, timestamp):
     # get the listname from the name
     setname = "".join(gamename.split())
+    db.sadd("gamelist", gamename)
     # append to the list
-    if db.zadd(gamename, timestamp, viewnumber) == 0:
-        db.zadd(gamename, timestamp, (repr(viewnumber) + "." + repr(timestamp)))
+    if db.zadd(gamename+"-last_hour", timestamp, viewnumber) == 0:
+        db.zadd(gamename+"-last_hour", timestamp, (repr(viewnumber) + "." + repr(timestamp)))
 
 
 queryAddress = 'https://api.twitch.tv/kraken/games/top?limit=100'
