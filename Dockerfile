@@ -7,7 +7,7 @@ RUN apt-get -y install python3
 RUN apt-get -y install python3-pip
 RUN pip3 install redis
 
-ENV dbAddress=redis_twitch
+ENV DBADDRESS redis_twitch
 
 ADD crontab /etc/cron.d/hello-cron
 ADD start-cron.sh /usr/bin/start-cron.sh
