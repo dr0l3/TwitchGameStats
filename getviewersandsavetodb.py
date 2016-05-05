@@ -37,7 +37,8 @@ current_top_10 = {x.decode("utf-8") for x in current_top_10}
 new_top_10 = []
 for i in range(10):
     top_10_game = top[i]
-    new_top_10.append(top_10_game["game"]["name"])
+    new_top_10.append(top_10_game["game"]["name"].lower())
+
 diff = set(new_top_10).symmetric_difference(set(current_top_10))
 to_add = set(diff).intersection(new_top_10)
 to_remove = set(diff).intersection(current_top_10)
@@ -48,7 +49,7 @@ for game in to_remove:
     db.srem("top_10_now", game)
 
 for chans in top:
-    game = chans["game"]["name"]
+    game = chans["game"]["name"].lower()
     viewers = chans["viewers"]
     date = datetime.datetime.now()
     addmeasurementtodb(game, viewers, int(date.timestamp()))

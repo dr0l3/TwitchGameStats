@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script>
+        $(function () {
+            var pathname = window.location.pathname;
+            var game = decodeURI(pathname.substr(pathname.indexOf("/", 2)+1));
+            $.getJSON( "../public/individualgame.json",{"game": game, "duration": (30*24)}, function(data){
+                $('#lineChartNow').highcharts({
+                    chart:{
+                        height: 600
+                    },
+                    title: {
+                        text: 'Last hour line chart'
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        dateTimeLabelFormats: { // don't display the dummy year
+                            month: '%e. %b',
+                            year: '%b'
+                        },
+                        title: {
+                            text: 'Date'
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Viewers'
+                        },
+                        min: 0
+                    },
+
+                    legend: {
+                        align: 'right',
+                        verticalAlign: 'top',
+                        layout: 'vertical',
+                        x: 0,
+                        y: 200
+                    },
+
+                    series: data
+                });
+            });
+        });
+    </script>
+    <meta charset="UTF-8">
+    <title>Fancy stuff</title>
+</head>
+<body>
+Welcome to my fantastic site
+<div id="lineChartNow" style="width:100%; height:600px;"></div>
+
+</body>
+</html>

@@ -39,7 +39,7 @@ function getOnlyLatestGameDataFromDB(data){
         var gameStats = {};
         gameStats["name"] = data;
 
-        client.zrange(data+"-last_hour", "0", "0", function (err, replies) {
+        client.zrevrange(data+"-last_hour", "0", "0", function (err, replies) {
             if (err) {
                 console.log("Err in data connection to Redis: " + err);
                 gameStats["data"] = 0;
@@ -152,12 +152,28 @@ app.get('/stuff', function(req, res){
 
 app.get('/game/*', function(req, res){
     var game = req.originalUrl.substring(nth_occurrence(req.originalUrl, "/", 2)+1, req.originalUrl.len);
-    console.log(game);
-
+    res.sendFile('individualGame.html', { root: path.join(__dirname, './public') });
 });
 
 app.get('/', function(req, res){
     res.sendFile('abc.html', { root: path.join(__dirname, './public') });
+});
+
+app.get('/public/gamelist.json*', function(req, res){
+    var query = req.query["q"];
+    console.log(query);
+    new Promise(function(resolve, reject){
+        client.sscan("gamelist",0, "MATCH", "*"+query+"*", "COUNT", "1000", function(err, replies){
+            var games = [];
+            replies = replies[1];
+            replies.forEach(function(reply, i){
+                games.push({"value": reply, "label": reply})
+            });
+            resolve(games);
+        });
+    }).then(function(data){
+        res.send(data);
+    });
 });
 
 app.get('/public/lasthourPie.json', function(req, res){
@@ -182,15 +198,18 @@ app.get('/public/lasthourPie.json', function(req, res){
             });
         });
     }).then(function(data){
-        console.log("DATA RECUIEVED");
-        console.log(data);
         var gameData = [];
         var total_top_ten = 0;
         for (var i = 0; i < data["gamenumbers"].length; i++){
             var viewerNumber = data["gamenumbers"][i]["data"];
             var gameName = data["gamenumbers"][i]["name"];
             total_top_ten = total_top_ten + viewerNumber;
-            gameData.push({"name": gameName, "y": viewerNumber});
+            gameData.push(
+                {
+                    "name": gameName,
+                    "y": viewerNumber
+                }
+            );
         }
         var rest = data["totalviewers"] - total_top_ten;
         gameData.push({"name": "Rest", "y" : rest});
@@ -199,7 +218,6 @@ app.get('/public/lasthourPie.json', function(req, res){
             "colorByPoint": true,
             "data": gameData
         }];
-        console.log(retval);
         res.send(retval);
     });
 });
@@ -226,6 +244,46 @@ app.get('/public/lasthour.json', function(req, res){
     more_res.then(function(data){
         res.send(data);
     });
+});
+
+app.get('/public/individualgame.json', function(req, res){
+    var query = req.query;
+    var game = query["game"];
+    var duration = query["duration"];
+    if (duration > (30*24)){
+        var gamelist = game+"-average_every_day";
+    } else {
+        var gamelist = game+"-average_every_hour";
+    }
+    console.log(gamelist);
+    var data = new Promise(function(resolve, reject){
+        client.zrange(gamelist, 0, -1, "withscores", function(err, replies){
+            var gamedata = {};
+            gamedata["name"] = game;
+            var viewnumbers = [];
+
+            if (err){
+                console.log("Err in data connection to Redis: " + err);
+            }
+
+
+            for (var i = 0; i < replies.length; i = i+2){
+                var date = new Date(replies[i+1]*1000);
+                var date_in_utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes());
+
+                viewnumbers.push([date_in_utc, parseInt(replies[i])]);
+            }
+
+            gamedata["data"] = viewnumbers;
+
+            console.log(gamedata);
+
+            resolve(gamedata);
+        });
+    });
+    data.then(function(data){
+        res.send([data]);
+    })
 });
 
 
