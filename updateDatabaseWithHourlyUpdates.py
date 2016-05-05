@@ -4,8 +4,8 @@ import redis
 import functools
 import os
 
-#dbAddress = os.environ["DBADDRESS"]
-POOL = redis.ConnectionPool(host="localhost", port=6379, db=0)
+dbAddress = os.environ["DBADDRESS"]
+POOL = redis.ConnectionPool(host=dbAddress, port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
 
 
