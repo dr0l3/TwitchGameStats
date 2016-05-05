@@ -34,6 +34,25 @@ function extractdatefromdbstring(string){
     return Date.UTC(year, month, day, hour, minute, second);
 }
 
+function getOnlyLatestGameDataFromDB(data){
+    return new Promise(function( resolve, reject){
+        var gameStats = {};
+        gameStats["name"] = data;
+
+        client.zrange(data+"-last_hour", "0", "0", function (err, replies) {
+            if (err) {
+                console.log("Err in data connection to Redis: " + err);
+                gameStats["data"] = 0;
+                resolve(gameStats);
+            }
+
+            gameStats["data"] = parseInt(replies);
+
+            resolve(gameStats);
+        });
+    });
+}
+
 function getGameDataFromDB(data) {
     return new Promise(function (resolve, reject) {
         var gameStats = {};
@@ -56,10 +75,22 @@ function getGameDataFromDB(data) {
 
 
             gameStats["data"] = viewNumbers;
-            console.log(gameStats)
 
             //console.log(replies);
             resolve(gameStats);
+        });
+    });
+}
+
+function getTotalViewersFromDB(){
+    return new Promise(function(resolve, reject){
+        client.get("total_current_viewers", function(err, reply){
+            if (err){
+                console.log("Err in data connection to Redis: " + err);
+                resolve(0);
+            }
+            console.log("replying " + reply);
+            resolve(reply);
         });
     });
 }
@@ -129,6 +160,50 @@ app.get('/', function(req, res){
     res.sendFile('abc.html', { root: path.join(__dirname, './public') });
 });
 
+app.get('/public/lasthourPie.json', function(req, res){
+    new Promise(function(resolve, reject) {
+        client.smembers("top_10_now", function(err, replies){
+            var games = [];
+            replies.forEach(function(reply, i){
+                games.push(reply);
+            });
+            //console.log(games);
+            resolve(games);
+        });
+    }).then(function(data){
+        var list_of_promises = data.map(getOnlyLatestGameDataFromDB);
+        //list_of_promises.push(getTotalViewersFromDB());
+        return Promise.all(list_of_promises);
+    }).then(function(data){
+        return new Promise(function(resolve, reject){
+            var viewernumbers = getTotalViewersFromDB();
+            viewernumbers.then(function(data3){
+                resolve({"gamenumbers": data, "totalviewers" : data3});
+            });
+        });
+    }).then(function(data){
+        console.log("DATA RECUIEVED");
+        console.log(data);
+        var gameData = [];
+        var total_top_ten = 0;
+        for (var i = 0; i < data["gamenumbers"].length; i++){
+            var viewerNumber = data["gamenumbers"][i]["data"];
+            var gameName = data["gamenumbers"][i]["name"];
+            total_top_ten = total_top_ten + viewerNumber;
+            gameData.push({"name": gameName, "y": viewerNumber});
+        }
+        var rest = data["totalviewers"] - total_top_ten;
+        gameData.push({"name": "Rest", "y" : rest});
+        var retval = [{
+            "name": "games",
+            "colorByPoint": true,
+            "data": gameData
+        }];
+        console.log(retval);
+        res.send(retval);
+    });
+});
+
 app.get('/public/lasthour.json', function(req, res){
 
     //Find all game titles
@@ -138,7 +213,6 @@ app.get('/public/lasthour.json', function(req, res){
             replies.forEach(function(reply, i){
                 games.push(reply);
             });
-            //console.log(games);
             resolve(games);
         });
     });
@@ -150,7 +224,6 @@ app.get('/public/lasthour.json', function(req, res){
 
     //send the page
     more_res.then(function(data){
-        //console.log(data);
         res.send(data);
     });
 });

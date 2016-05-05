@@ -7,12 +7,12 @@
     <script>
         $(function () {
             $.getJSON( "./public/lasthour.json", function(data){
-                $('#container').highcharts({
+                $('#lineChartNow').highcharts({
                     chart:{
-                        height: 800
+                        height: 600
                     },
                     title: {
-                        text: 'Last hour'
+                        text: 'Last hour line chart'
                     },
                     xAxis: {
                         type: 'datetime',
@@ -30,6 +30,50 @@
                         },
                         min: 0
                     },
+
+                    legend: {
+                        align: 'right',
+                        verticalAlign: 'top',
+                        layout: 'vertical',
+                        x: 0,
+                        y: 200
+                    },
+
+                    series: data
+                });
+            });
+        });
+    </script>
+    <script>
+        $(function () {
+            $.getJSON( "./public/lasthourPie.json", function(data){
+                $('#pieChartNow').highcharts({
+                    chart: {
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false,
+                        type: 'pie'
+                    },
+                    title: {
+                        text: 'Current gameshare'
+                    },
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                style: {
+                                    color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                }
+                            }
+                        }
+                    },
+
                     series: data
                 });
             });
@@ -39,8 +83,9 @@
     <title>Fancy stuff</title>
 </head>
 <body>
-JAKSHDKJHAKSJdh
-<div id="container" style="width:100%; height:400px;"></div>
+Welcome to my fantastic site
+<div id="lineChartNow" style="width:100%; height:600px;"></div>
+<div id="pieChartNow" style="width:100%; height:400px"></div>
 
 </body>
 </html>

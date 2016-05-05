@@ -11,15 +11,6 @@ POOL = redis.ConnectionPool(host=dbAddress, port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
 
 
-# def addmeasurement(name, viewernumber, date):
-#    if games.__contains__(name):
-#        item = games[name]
-#    else:
-#        games[name] = []
-#        item = games[name]
-#    tupleOfMeasurement = (viewernumber, date)
-#    item.append(tupleOfMeasurement)
-
 
 def addmeasurementtodb(gamename, viewnumber, timestamp):
     db.sadd("gamelist", gamename)
@@ -28,14 +19,18 @@ def addmeasurementtodb(gamename, viewnumber, timestamp):
         db.zadd(gamename + "-last_hour", timestamp, (repr(viewnumber) + "." + repr(timestamp)))
 
 
-queryAddress = 'https://api.twitch.tv/kraken/games/top?limit=100'
+queryAddressTopGames = 'https://api.twitch.tv/kraken/games/top?limit=100'
+responseTopGames = urllib.request.urlopen(queryAddressTopGames)
+htmlTopGames = responseTopGames.read()
+htmlAsJsonTopGames = json.loads(htmlTopGames.decode("utf-8"))
+top = htmlAsJsonTopGames["top"]
 
-response = urllib.request.urlopen(queryAddress)
-html = response.read()
-
-htmlAsJson = json.loads(html.decode("utf-8"))
-
-top = htmlAsJson["top"]
+queryAddressSummary = 'https://api.twitch.tv/kraken/streams/summary'
+responseSummary = urllib.request.urlopen(queryAddressSummary)
+htmlSummary = responseSummary.read()
+htmlAsJsonSummary = json.loads(htmlSummary.decode("utf-8"))
+total_viewers = htmlAsJsonSummary["viewers"]
+db.set("total_current_viewers", total_viewers)
 
 current_top_10 = db.smembers("top_10_now")
 current_top_10 = {x.decode("utf-8") for x in current_top_10}
@@ -43,10 +38,9 @@ new_top_10 = []
 for i in range(10):
     top_10_game = top[i]
     new_top_10.append(top_10_game["game"]["name"])
-
-difference = list(set(new_top_10) - set(current_top_10))
-to_add = set(difference).intersection(new_top_10)
-to_remove = set(difference).intersection(current_top_10)
+diff = set(new_top_10).symmetric_difference(set(current_top_10))
+to_add = set(diff).intersection(new_top_10)
+to_remove = set(diff).intersection(current_top_10)
 
 for game in to_add:
     db.sadd("top_10_now", game)
