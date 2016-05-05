@@ -24,12 +24,12 @@ for game in list_of_game_names:
     #oldest timestamp is 30 days old
     current_time_plus_a_day = current_date + (60 * 60 * 24)
     current_time_plus_30_days = current_date + (60 * 60 * 24 * 30)
-    db.zremrangebyscore(game_set_name, current_time_plus_30_days, "+inf")
-    list_of_too_old_stuff = db.zrangebyscore(game_set_name, current_date, current_time_plus_a_day)
+    db.zremrangebyscore(game_set_name, "-inf", current_time_plus_30_days)
+    list_of_events = db.zrangebyscore(game_set_name, current_date, current_time_plus_a_day)
 
-    if len(list_of_too_old_stuff) > 0:
-        average = functools.reduce(add_two_numbers, [int(float(x)) for x in list_of_too_old_stuff]) // len(
-                list_of_too_old_stuff)
+    if len(list_of_events) > 0:
+        list_of_events = [int(float(x)) for x in list_of_events]
+        average = sum(list_of_events) // len(list_of_events)
     else:
         average = 0
 
