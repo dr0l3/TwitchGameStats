@@ -13,7 +13,6 @@ def add_two_numbers(a, b):
     return a + b
 
 
-
 # compute average of last hour and add to average_every_hour db
 current_date = int(datetime.datetime.now().timestamp())
 oldest_possible_timestamp = current_date - (60 * 60)

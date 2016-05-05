@@ -21,7 +21,7 @@ for game in list_of_game_names:
     game = game.decode("utf-8")
     game_set_name = game + "-average_every_hour"
 
-    #oldest timestamp is 30 days old
+    # oldest timestamp is 30 days old
     current_time_plus_a_day = current_date + (60 * 60 * 24)
     current_time_plus_30_days = current_date + (60 * 60 * 24 * 30)
     db.zremrangebyscore(game_set_name, "-inf", current_time_plus_30_days)
