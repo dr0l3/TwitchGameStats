@@ -133,7 +133,7 @@ app.get('/public/lasthour.json', function(req, res){
 
     //Find all game titles
     var gamelist = new Promise(function(resolve, reject) {
-        client.smembers("gamelist", function(err, replies){
+        client.smembers("top_10_now", function(err, replies){
             var games = [];
             replies.forEach(function(reply, i){
                 games.push(reply);
