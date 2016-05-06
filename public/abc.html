@@ -1,30 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:text-align="http://www.w3.org/1999/xhtml">
 <head>
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
-    <style>
-        #project-label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 1em;
-        }
-    </style>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
     <script>
         $(function () {
             $.getJSON( "./public/lasthour.json", function(data){
                 $('#lineChartNow').highcharts({
-                    chart:{
-                        height: 600
-                    },
-                    title: {
-                        text: 'Last hour line chart'
+                    title:{
+                        text: "Top 10 games for the last hour"
                     },
                     xAxis: {
                         type: 'datetime',
                         dateTimeLabelFormats: { // don't display the dummy year
+                            day: '%e. %b',
                             month: '%e. %b',
                             year: '%b'
                         },
@@ -41,10 +35,8 @@
 
                     legend: {
                         align: 'right',
-                        verticalAlign: 'top',
-                        layout: 'vertical',
-                        x: 0,
-                        y: 200
+                        verticalAlign: 'middle',
+                        layout: 'vertical'
                     },
 
                     series: data
@@ -56,14 +48,14 @@
         $(function () {
             $.getJSON( "./public/lasthourPie.json", function(data){
                 $('#pieChartNow').highcharts({
+                    title: {
+                        text: "Pie chart for top 10 games"
+                    },
                     chart: {
                         plotBackgroundColor: null,
                         plotBorderWidth: null,
                         plotShadow: false,
                         type: 'pie'
-                    },
-                    title: {
-                        text: 'Current gameshare'
                     },
                     tooltip: {
                         pointFormat: '{series.name}: <b>{point.y:,.0f}</b>'
@@ -89,26 +81,6 @@
     </script>
     <script>
         $(function() {
-            var projects = [
-                {
-                    value: "jquery",
-                    label: "jQuery",
-                    desc: "the write less, do more, JavaScript library",
-                    icon: "jquery_32x32.png"
-                },
-                {
-                    value: "jquery-ui",
-                    label: "jQuery UI",
-                    desc: "the official user interface library for jQuery",
-                    icon: "jqueryui_32x32.png"
-                },
-                {
-                    value: "sizzlejs",
-                    label: "Sizzle JS",
-                    desc: "a pure-JavaScript CSS selector engine",
-                    icon: "sizzlejs_32x32.png"
-                }
-            ];
 
             $( "#gamesearch" ).autocomplete({
                 minLength: 2,
@@ -121,31 +93,33 @@
                         },
                         success: function( data ) {
                             response( data );
-                    }})},
+                        }})},
                 focus: function( event, ui ) {
                     $( "#gamesearch" ).val( ui.item.label );
                     return false;
                 },
                 select: function( event, ui ) {
-                    window.location.href = "http://localhost:5000/game/"+ui.item.label;
+                    window.location.href = "http://localhost:5000/gamezoom/"+ui.item.label;
                     return false;
                 }
-            }).autocomplete( "instance" )._renderItem = function( ul, item ) {
-                return $( "<li>" )
-                        .append( "<a>" + item.label + "</a>" )
-                        .appendTo( ul );
-            };
+            });
         });
     </script>
     <meta charset="UTF-8">
     <title>Fancy stuff</title>
 </head>
 <body>
-Welcome to my fantastic site
-<input id="gamesearch">
-<div id="lineChartNow" style="width:100%; height:600px;"></div>
-<div id="pieChartNow" style="width:100%; height:400px"></div>
-
+<div class="container">
+    <div class="jumbotron">
+        <div>
+            <label for="gamesearch">Search for a game: </label>
+            <input id="gamesearch">
+        </div>
+        <div id="lineChartNow" style="width:100%; height:400px; margin: 0 auto;" ></div>
+        <div style="height: 50px;"></div>
+        <div id="pieChartNow" style="width:100%; height:300px; margin: 0 auto;"></div>
+    </div>
+</div>
 
 
 </body>

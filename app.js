@@ -65,6 +65,7 @@ function getGameDataFromDBForLastHour(game){
         ts_now = ts_now / 1000;
         var ts_an_hour_ago = ts_now - (60*60);
 
+
         client.zrangebyscore(game, ts_an_hour_ago, ts_now, "withscores", function(err, replies){
             if(err){
                 console.log("Err in data connection to Redis: " + err);
@@ -194,6 +195,11 @@ app.get('/stuff', function(req, res){
     });
 });
 
+app.get('/gamezoom/*', function(req, res){
+    var game = req.originalUrl.substring(nth_occurrence(req.originalUrl, "/", 2)+1, req.originalUrl.len);
+    res.sendFile('individualZoomable.html', { root: path.join(__dirname, './public') });
+});
+
 app.get('/game/*', function(req, res){
     var game = req.originalUrl.substring(nth_occurrence(req.originalUrl, "/", 2)+1, req.originalUrl.len);
     res.sendFile('individualGame.html', { root: path.join(__dirname, './public') });
@@ -205,7 +211,6 @@ app.get('/', function(req, res){
 
 app.get('/public/gamelist.json*', function(req, res){
     var query = req.query["q"];
-    console.log(query);
     new Promise(function(resolve, reject){
         client.sscan("gamelist",0, "MATCH", "*"+query+"*", "COUNT", "1000", function(err, replies){
             var games = [];
@@ -292,9 +297,11 @@ app.get('/public/lasthour.json', function(req, res){
 
 app.get('/public/individualgame.json', function(req, res){
     var query = req.query;
+    console.log(query);
     var game = query["game"];
     var duration = query["duration"];
     var gamelist = game;
+    console.log(gamelist);
     var data = new Promise(function(resolve, reject){
         client.zrange(gamelist, 0, -1, "withscores", function(err, replies){
             var gamedata = {};
@@ -315,6 +322,7 @@ app.get('/public/individualgame.json', function(req, res){
         });
     });
     data.then(function(data){
+        //console.log(data);
         res.send([data]);
     })
 });

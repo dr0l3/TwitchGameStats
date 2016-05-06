@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script>
+        $(function () {
+            var pathname = window.location.pathname;
+            var game = decodeURI(pathname.substr(pathname.indexOf("/", 2) + 1));
+            $.getJSON('../public/individualgame.json', {"game": game}).then(function (data) {
+                var gamename = data[0]["name"];
+                data = data[0]["data"];
+
+
+                $('#container').highcharts('StockChart', {
+
+                    title: {
+                        text: "Gamehistory for " + gamename
+                    },
+
+                    yAxis: {
+                        opposite: false
+                    },
+
+                    scrollbar: {
+                        enabled: true
+                    },
+
+                    navigator: {
+                        enabled: true
+                    },
+
+                    legend: {
+                        enabled: true,
+                        align: 'right',
+                        verticalAlign: 'top',
+                        layout: 'vertical',
+                        x: 0,
+                        y: 200
+                    },
+
+                    rangeSelector: {
+                        selected: 1
+                    },
+
+                    series: [{
+                        name: gamename,
+                        data: data
+                    }]
+                });
+            });
+        });
+    </script>
+    <script>
+        $(function(){
+            $( "#games" ).autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: "../public/gamelist.json",
+                        dataType: "json",
+                        data: {
+                            q: request.term
+                        },
+                        success: function (data) {
+                            response(data);
+                        }
+                    })
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="jumbotron">
+        <div id="container" style="width: 100%; height: 400px; margin: 0 auto"></div>
+        <div style="height: 50px;"></div>
+        <div class="ui-widget">
+            <label for="games">Compare with other games: </label>
+            <input id="games">
+            <button onclick="myFunction()">Add game</button>
+        </div>
+    </div>
+</div>
+<script>
+    function myFunction() {
+        var game = $("#games").val();
+        $.getJSON('../public/individualgame.json',{"game": game}).then( function (data) {
+            var chart = $('#container').highcharts();
+            chart.addSeries({
+                name: data[0]["name"],
+                data: data[0]["data"]
+            })
+        });
+    }
+</script>
+</body>
+</html>

@@ -122,16 +122,19 @@ def collapsedaily(game):
                 continue
 
 
-createabunchoffakedata("ark", datetime.datetime(2016, 3, 6, 10, 55), 100, 2000)
+db.set("total_current_viewers", 20000)
+createabunchoffakedata("ark", datetime.datetime(2016, 3, 1, 10, 55), 100, 2000)
 print("Data created")
-# createabunchoffakedata("world of warcraft", datetime.datetime(2015, 10, 10, 0, 0), 2000, 20000)
+createabunchoffakedata("world of warcraft", datetime.datetime(2016, 3, 1, 10, 55), 2000, 20000)
 # createabunchoffakedata("league of legends", datetime.datetime(2015, 10, 10, 0, 0), 80000, 200000)
 # createabunchoffakedata("dota 2", datetime.datetime(2015, 10, 10, 0, 0), 50000, 150000)
 # createabunchoffakedata("hearthstone", datetime.datetime(2015, 10, 10, 0, 0), 30000, 80000)
 # db.set("total_current_viewers", 500000)
 collapsehourly("ark")
+collapsehourly("world of warcraft")
 print("Hourly updates done")
 collapsedaily("ark")
+collapsedaily("world of warcraft")
 print("Daily updates done")
 # printdatatofile("ark")
 
