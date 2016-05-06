@@ -4,6 +4,8 @@ var redis = require('redis');
 var client = redis.createClient();
 var express = require('express');
 var path = require('path');
+var util = require('util');
+var fs = require('fs');
 var app = express();
 
 function nth_occurrence (string, char, nth) {
@@ -39,7 +41,7 @@ function getOnlyLatestGameDataFromDB(data){
         var gameStats = {};
         gameStats["name"] = data;
 
-        client.zrevrange(data+"-last_hour", "0", "0", function (err, replies) {
+        client.zrevrange(data, "0", "0", function (err, replies) {
             if (err) {
                 console.log("Err in data connection to Redis: " + err);
                 gameStats["data"] = 0;
@@ -53,30 +55,89 @@ function getOnlyLatestGameDataFromDB(data){
     });
 }
 
+function getGameDataFromDBForLastHour(game){
+    return new Promise(function (resolve, reject){
+        console.log("preparing for getting last hours game data by score for : "+ game);
+        var gamestats = {};
+        gamestats["name"] = game;
+        var viewnumbers = [];
+        console.log("preparing for getting last hours game data by score for : "+ game);
+        var date_now = new Date();
+        console.log("preparing for getting last hours game data by score for : "+ game);
+        //Timestamps in the db are python timestamps that aren't in miliseconds.
+        //console.log(new Date.UTC(date_now.getFullYear(), (date_now.getMonth()+ 1), (date_now.getDay+ 1), date_now.getHours(), date_now.getMinutes()));
+        //var ts_now = new Date.UTC(date_now.getFullYear(), (date_now.getMonth() +1), (date_now.getDay+ 1), date_now.getHours(), date_now.getMinutes());
+        var ts_now = Date.now();
+        ts_now = ts_now / 1000;
+        console.log("preparing for getting last hours game data by score for : "+ game);
+        var ts_an_hour_ago = ts_now - (60*60);
+
+        console.log("Getting last hours game data by score for : "+ game);
+        console.log(ts_now);
+        console.log(ts_an_hour_ago);
+
+        client.zrangebyscore(game, ts_an_hour_ago, ts_now, "withscores", function(err, replies){
+            if(err){
+                console.log("Err in data connection to Redis: " + err);
+                resolve({});
+            }
+
+            console.log(replies);
+
+            for (var i = 0; i < replies.length; i = i +2){
+                viewnumbers.push([replies[i+1]*1000, parseInt(replies[i])]);
+            }
+
+            gamestats["data"] = viewnumbers;
+
+            console.log(gamestats);
+
+            resolve(gamestats);
+        });
+    });
+}
+
+function getGameDataFromDBUsingRange(game, start_ts, end_ts){
+    return new Promise(function (resolve, reject){
+        var gamestats = {};
+        gamestats["name"] = game;
+        var viewnumbers = [];
+
+        client.zrangebyscore(game, start_ts, end_ts, "withscores", function(err, replies){
+            if(err){
+                console.log("Err in data connection to Redis: " + err);
+                resolve({});
+            }
+
+            for (var i = 0; i < replies.length; i = i +2){
+                viewnumbers.push([replies[i+1]*1000, parseInt(replies[i])]);
+            }
+
+            gamestats["data"] = viewnumbers;
+
+            resolve(gamestats);
+        });
+    });
+}
+
 function getGameDataFromDB(data) {
     return new Promise(function (resolve, reject) {
         var gameStats = {};
         gameStats["name"] = data;
         var viewNumbers = [];
 
-        client.zrange(data+"-last_hour", "0", "-1","withscores", function (err, replies) {
+        client.zrange(data, "0", "-1","withscores", function (err, replies) {
             if (err) {
                 console.log("Err in data connection to Redis: " + err);
                 resolve({});
             }
-            //console.log(replies);
 
             for (var i = 0; i < replies.length; i = i+2){
-                var date = new Date(replies[i+1]*1000);
-                var date_in_utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes());
-
-                viewNumbers.push([date_in_utc, parseInt(replies[i])]);
+                viewNumbers.push([replies[i+1]*1000, parseInt(replies[i])]);
             }
-
 
             gameStats["data"] = viewNumbers;
 
-            //console.log(replies);
             resolve(gameStats);
         });
     });
@@ -89,7 +150,7 @@ function getTotalViewersFromDB(){
                 console.log("Err in data connection to Redis: " + err);
                 resolve(0);
             }
-            console.log("replying " + reply);
+            //console.log("replying " + reply);
             resolve(reply);
         });
     });
@@ -224,6 +285,7 @@ app.get('/public/lasthourPie.json', function(req, res){
 
 app.get('/public/lasthour.json', function(req, res){
 
+    console.log("lasthour.json requested");
     //Find all game titles
     var gamelist = new Promise(function(resolve, reject) {
         client.smembers("top_10_now", function(err, replies){
@@ -237,11 +299,13 @@ app.get('/public/lasthour.json', function(req, res){
 
     //find viewer numbers for each game
     var more_res = gamelist.then(function(data){
-        return Promise.all(data.map(getGameDataFromDB));
+        console.log(data);
+        return Promise.all(data.map(getGameDataFromDBForLastHour));
     });
 
     //send the page
     more_res.then(function(data){
+        console.log(data);
         res.send(data);
     });
 });
@@ -250,11 +314,7 @@ app.get('/public/individualgame.json', function(req, res){
     var query = req.query;
     var game = query["game"];
     var duration = query["duration"];
-    if (duration > (30*24)){
-        var gamelist = game+"-average_every_day";
-    } else {
-        var gamelist = game+"-average_every_hour";
-    }
+    var gamelist = game;
     console.log(gamelist);
     var data = new Promise(function(resolve, reject){
         client.zrange(gamelist, 0, -1, "withscores", function(err, replies){
@@ -266,17 +326,11 @@ app.get('/public/individualgame.json', function(req, res){
                 console.log("Err in data connection to Redis: " + err);
             }
 
-
             for (var i = 0; i < replies.length; i = i+2){
-                var date = new Date(replies[i+1]*1000);
-                var date_in_utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes());
-
-                viewnumbers.push([date_in_utc, parseInt(replies[i])]);
+                viewnumbers.push([replies[i+1]*1000, parseInt(replies[i])]);
             }
 
             gamedata["data"] = viewnumbers;
-
-            console.log(gamedata);
 
             resolve(gamedata);
         });
