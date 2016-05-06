@@ -11,12 +11,11 @@ POOL = redis.ConnectionPool(host=dbAddress, port=6379, db=0)
 db = redis.StrictRedis(connection_pool=POOL)
 
 
-
-def addmeasurementtodb(gamename, viewnumber, timestamp):
+def addmeasurementtodb(gamename, timestamp, viewnumber, ):
     db.sadd("gamelist", gamename)
     # append to the list
-    if db.zadd(gamename + "-last_hour", timestamp, viewnumber) == 0:
-        db.zadd(gamename + "-last_hour", timestamp, (repr(viewnumber) + "." + repr(timestamp)))
+    db.zadd(gamename, timestamp, repr(viewnumber) + "." + repr(int(float(timestamp))))
+
 
 
 queryAddressTopGames = 'https://api.twitch.tv/kraken/games/top?limit=100'
@@ -52,6 +51,6 @@ for chans in top:
     game = chans["game"]["name"].lower()
     viewers = chans["viewers"]
     date = datetime.datetime.now()
-    addmeasurementtodb(game, viewers, int(date.timestamp()))
+    addmeasurementtodb(game, int(date.timestamp()), viewers)
 
 print("Viewership numbers downloaded. " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

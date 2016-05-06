@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from datetime import timedelta
 import datetime
 import redis
 import functools
@@ -13,19 +14,50 @@ def add_two_numbers(a, b):
     return a + b
 
 
-# compute average of last hour and add to average_every_hour db
-current_date = int(datetime.datetime.now().timestamp())
-oldest_possible_timestamp = current_date - (60 * 60)
-list_of_game_names = db.smembers("gamelist")
-for game in list_of_game_names:
-    game = game.decode("utf-8")
-    game_set_name = game + "-last_hour"
-    db.zremrangebyscore(game_set_name, "-inf", oldest_possible_timestamp)
-    list_of_events = db.zrange(game_set_name, 0, -1)
-    if len(list_of_events) > 0:
-        list_of_events = [int(float(x)) for x in list_of_events]
-        average = sum(list_of_events) // len(list_of_events)
-        if db.zadd(game + "-average_every_hour", current_date, average) == 0:
-            db.zadd(game + "-average_every_hour", current_date, (repr(average) + "." + repr(current_date)))
+def collapsehourly(game):
+    starthour = 1
+    current_time = datetime.datetime.now()
+    while True:
+        # get date one hour ago
+        one_hour_ago = current_time - timedelta(hours=starthour)
+        one_hour_ago_on_the_clock = datetime.datetime(one_hour_ago.year, one_hour_ago.month, one_hour_ago.day,
+                                                      one_hour_ago.hour, 0)
+
+        # get date two hours ago
+        two_hours_ago = current_time - timedelta(hours=(starthour + 1))
+        two_hours_ago_on_the_clock = datetime.datetime(two_hours_ago.year, two_hours_ago.month, two_hours_ago.day,
+                                                       two_hours_ago.hour, 0)
+
+        # get timestamps
+        ts_start = two_hours_ago_on_the_clock.timestamp()
+        ts_end = one_hour_ago_on_the_clock.timestamp() - 1
+
+        # get data from db
+        data_to_be_collapsed = db.zrangebyscore(game, ts_start, ts_end, withscores=True)
+        starthour += 1
+        if len(data_to_be_collapsed) > 1:
+            # calculate the average
+            total = 0
+            total_ts = 0
+            for viewcount_ts_tuple in data_to_be_collapsed:
+                total += int(float(viewcount_ts_tuple[0].decode("utf-8")))
+                total_ts += int(float(viewcount_ts_tuple[1]))
+            average = total // len(data_to_be_collapsed)
+            average_ts = total_ts // len(data_to_be_collapsed)
+
+            # delete in db
+            db.zremrangebyscore(game, ts_start, ts_end)
+
+            # insert data in db
+            db.zadd(game, average_ts, repr(average) + "." + repr(int(float(average_ts))))
+        else:
+            if len(data_to_be_collapsed) == 0:
+                return
+            else:
+                continue
+
+gamelist = db.smembers("gamelist")
+for game in gamelist:
+    collapsehourly(game)
 
 print("Hourly updates done. " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
