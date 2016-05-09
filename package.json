@@ -1,0 +1,29 @@
+{
+  "name": "twitchstats-nodeapp",
+  "version": "0.0.1",
+  "description": "nodeapp to serve pages for twitchstats",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dr0l3/TwitchGameStats.git"
+  },
+  "author": "Rune Pedersen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dr0l3/TwitchGameStats/issues"
+  },
+  "homepage": "https://github.com/dr0l3/TwitchGameStats#readme",
+  "dependencies": {
+    "fs": "0.0.2",
+    "http": "0.0.0",
+    "express": "^2.5.3",
+    "path": "^0.12.7",
+    "promise": "^7.1.1",
+    "redis": "^2.5.3",
+    "util": "^0.10.3"
+  }
+}
