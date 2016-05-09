@@ -1,7 +1,7 @@
 var http = require('http');
 var Promise = require('promise');
 var redis = require('redis');
-var client = redis.createClient();
+var client = redis.createClient({"host": process.env.DBADDRESS});
 var express = require('express');
 var path = require('path');
 var util = require('util');
