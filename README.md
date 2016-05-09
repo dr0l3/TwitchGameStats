@@ -1,4 +1,6 @@
 # TwitchGameStats
 Display how twitch viewer numbers has changed over timer for different games
 
-Not done yet.
+Is live at drole.rocks:5000
+
+Code is incredibly ugly.
