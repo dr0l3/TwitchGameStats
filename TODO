@@ -1,3 +1,5 @@
 TODO
+1) Docker.node needs to be fixed. Wrong version of express.
+1) Docker.node dockerfile not able to start stuff on its own.
 2) add the ability to add a series to a graph
 3) some kind of layout
